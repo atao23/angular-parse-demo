@@ -12,7 +12,7 @@
 //sending a DELETE to this URL + '/' + task.objectId will delete an existing task
 var tasksUrl = 'https://api.parse.com/1/classes/tasks';
 
-angular.module('ToDoApp', [])
+angular.module('ToDoApp', ['ui.bootstrap'])
     .config(function($httpProvider) {
         //Parse required two extra headers sent with every HTTP request: X-Parse-Application-Id, X-Parse-REST-API-Key
         //the first needs to be set to your application's ID value
@@ -26,11 +26,19 @@ angular.module('ToDoApp', [])
 
     .controller('TasksController', function($scope, $http) {
         $scope.refreshTasks = function() {
+            $scope.loading = true;
             $http.get(tasksUrl + '?where={"done":false}')
                 .success(function(data) {
                     $scope.tasks = data.results;
+                })
+                .error(function(err) {
+                    $scope.errorMessage = err;
+                })
+                .finally(function() {
+                    $scope.loading = false;
                 });
         };
+
         $scope.refreshTasks();
 
         $scope.newTask = {done: false};
@@ -43,6 +51,9 @@ angular.module('ToDoApp', [])
                     $scope.tasks.push($scope.newTask);
                     $scope.newTask = {done: false};
                 })
+                .error(function(err) {
+                    $scope.errorMessage = err;
+                })
 
                 .finally(function() {
                     $scope.inserting = false;
@@ -53,6 +64,28 @@ angular.module('ToDoApp', [])
             $http.put(tasksUrl + '/' + task.objectId, task)
                 .success(function() {
                     //we could give some feedback to the user
+                })
+                .error(function(err) {
+                    $scope.errorMessage = err;
                 });
+        };
+
+        $scope.incrementVotes = function(task, amount) {
+            $scope.updating = true;
+            $http.put(tasksUrl + '/' + task.objectId, {
+                votes : {
+                    __op: 'Increment',
+                    amount: amount
+                }
+            })
+                .success(function(data) {
+                    task.votes = data.votes;
+                })
+                .error(function(error) {
+                    console.log(error);
+                })
+                .finally(function() {
+                    $scope.updating = false;
+                })
         };
     });

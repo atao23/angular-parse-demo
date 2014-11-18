@@ -27,8 +27,11 @@ angular.module('ToDoApp', ['ui.bootstrap'])
     .controller('TasksController', function($scope, $http) {
         $scope.refreshTasks = function() {
             $scope.loading = true;
-            $http.get(tasksUrl + '?where={"done":false}')
+            //get all task objects saved by my application on Parse.com
+            $http.get(tasksUrl + '?where={"done" : false}')
                 .success(function(data) {
+                    //Parse.com returns an object with one property called 'results'
+                    //that contains an array of all task objects
                     $scope.tasks = data.results;
                 })
                 .error(function(err) {
@@ -43,12 +46,21 @@ angular.module('ToDoApp', ['ui.bootstrap'])
 
         $scope.newTask = {done: false};
 
+        //function to add a new task to the list
         $scope.addTask = function() {
             $scope.inserting = true; 
+            
+            //POST will add (insert) a new item to the class
             $http.post(tasksUrl, $scope.newTask)
                 .success(function(responseData) {
+                    //Parse.com will return the new objectID in the response data
+                    //copy that to te task we just inserted
                     $scope.newTask.objectId = responseData.objectId;
+
+                    //add that task to our task list
                     $scope.tasks.push($scope.newTask);
+
+                    //reset the newTask to clear the form
                     $scope.newTask = {done: false};
                 })
                 .error(function(err) {
@@ -60,6 +72,7 @@ angular.module('ToDoApp', ['ui.bootstrap'])
                 });
         };
 
+        //function to update an existing task
         $scope.updateTask = function(task) {
             $http.put(tasksUrl + '/' + task.objectId, task)
                 .success(function() {
